@@ -1,0 +1,195 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Metadata": {
+        "AWS::CloudFormation::Designer": {
+            "c086216a-0851-4a02-a310-824def5c7739": {
+                "size": {
+                    "width": 60,
+                    "height": 60
+                },
+                "position": {
+                    "x": 110,
+                    "y": 50
+                },
+                "z": 0
+            },
+            "98e94358-3ea4-46a8-8780-141aa99e2d99": {
+                "size": {
+                    "width": 60,
+                    "height": 60
+                },
+                "position": {
+                    "x": 310,
+                    "y": 50
+                },
+                "z": 0,
+                "dependson": [
+                    "aa4d50ea-d50b-4079-81a1-8d8e798dfac0"
+                ]
+            },
+            "aa4d50ea-d50b-4079-81a1-8d8e798dfac0": {
+                "size": {
+                    "width": 60,
+                    "height": 60
+                },
+                "position": {
+                    "x": 230,
+                    "y": 170
+                },
+                "z": 0,
+                "dependson": [
+                    "c086216a-0851-4a02-a310-824def5c7739"
+                ]
+            },
+            "ef3749a2-fc92-45b7-9c98-83f2384c009b": {
+                "size": {
+                    "width": 60,
+                    "height": 60
+                },
+                "position": {
+                    "x": 480,
+                    "y": 50
+                },
+                "z": 0,
+                "dependson": [
+                    "98e94358-3ea4-46a8-8780-141aa99e2d99"
+                ]
+            },
+            "a5fe6782-2f0f-4fad-b792-8d4a06459149": {
+                "source": {
+                    "id": "98e94358-3ea4-46a8-8780-141aa99e2d99"
+                },
+                "target": {
+                    "id": "aa4d50ea-d50b-4079-81a1-8d8e798dfac0"
+                },
+                "z": 1
+            },
+            "793a0cf4-9317-4a6a-bc7d-143e4f928065": {
+                "source": {
+                    "id": "aa4d50ea-d50b-4079-81a1-8d8e798dfac0"
+                },
+                "target": {
+                    "id": "c086216a-0851-4a02-a310-824def5c7739"
+                },
+                "z": 2
+            },
+            "587e5ccd-94bd-45b0-948d-ecefe67c4afe": {
+                "source": {
+                    "id": "ef3749a2-fc92-45b7-9c98-83f2384c009b"
+                },
+                "target": {
+                    "id": "98e94358-3ea4-46a8-8780-141aa99e2d99"
+                },
+                "z": 3
+            }
+        }
+    },
+	"Parameters" : {
+		"AWSAccountID" : {
+			"Type" : "String",
+			"Default" : "123456789",
+			"Description" : "Enter AWS Account where the stack is to be deployed."
+		},
+		"AWSEnv" : {
+			"Type" : "String",
+			"Default" : "dev",
+			"AllowedValues" : ["dev", "qa", "prod"],
+			"Description" : "Enter d/q/p environment where the stack is to be deployed."
+		},
+		"AWSAccountCode" : {
+			"Type" : "String",
+			"Default" : "c125",
+			"Description" : "Enter AWS account code where the stack is to be deployed."
+		},
+		"LambdaExecRoleName" : {
+			"Type" : "String",
+			"Default" : "LoggingLambdaExecutionRole",
+			"Description" : "Enter lambda execution role which has access to read from SQS and write to SES."
+		}
+	},
+    "Resources": {
+        "SNSTopic": {
+            "Type": "AWS::SNS::Topic",
+            "Properties": {
+				"TopicName": { "Fn::Join" : [ "-", ["Logging-Notifier", { "Ref" : "AWSEnv" } ] ] }
+			},
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "c086216a-0851-4a02-a310-824def5c7739"
+                }
+            }
+        },
+		"SNSTopicPolicy": {
+			"Type" : "AWS::SNS::TopicPolicy",
+			"Properties" : {
+				"PolicyDocument" : { "Version": "2008-10-17", "Id": "__default_policy_ID", "Statement": [ { "Sid": "__default_statement_ID", "Effect": "Allow", "Principal": { "AWS": "*" }, "Action": [ "SNS:GetTopicAttributes", "SNS:SetTopicAttributes", "SNS:AddPermission", "SNS:RemovePermission", "SNS:DeleteTopic", "SNS:Subscribe", "SNS:ListSubscriptionsByTopic", "SNS:Publish", "SNS:Receive" ], "Resource":  { "Fn::Join" : [ ":",[{ "Fn::Join" : [ ":", ["arn:aws:sns:us-east-1", { "Ref" : "AWSAccountID" } ] ] },{ "Fn::Join" : [ "-", ["Logging-Notifier", { "Ref" : "AWSEnv" } ] ] }]]}, "Condition": { "StringEquals": { "AWS:SourceOwner": { "Ref" : "AWSAccountID" } } } } ] },
+				"Topics" : [ { "Ref" : "SNSTopic" } ]
+			}
+		},
+		"LambdaNotifier": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+				"FunctionName": { "Fn::Join" : [ "-", ["LambdaNotifier", { "Ref" : "AWSEnv" } ] ] },
+				"Handler": "app.lambda_handler",
+				"Role": "arn:aws:iam::541627396844:role/demo-ecs-test-CFNExecutionRole",
+				"Code": {
+					"S3Bucket": "testbucketsr1",
+					"S3Key": "logging-cft/logginglambdaamilookup.zip"
+				},
+				"Runtime": "python3.7",
+				"Timeout": 30
+			},
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "ef3749a2-fc92-45b7-9c98-83f2384c009b"
+                }
+            },
+            "DependsOn": [
+                "SNSTopic"
+            ]
+        },
+		"SQSQueueDLQ": {
+            "Type": "AWS::SQS::Queue",
+            "Properties": {
+				"QueueName": { "Fn::Join" : [ "-", ["Logging-Queue-DLQ", { "Ref" : "AWSEnv" } ] ] }
+			},
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "98e94358-3ea4-46a8-8780-141aa99e2d99"
+                }
+            },
+            "DependsOn": [
+                "SNSTopicPolicy"
+            ]
+        },
+		"SQSQueue": {
+            "Type": "AWS::SQS::Queue",
+            "Properties": {
+				"QueueName": { "Fn::Join" : [ "-", ["Logging-Queue", { "Ref" : "AWSEnv" } ] ] }
+			},
+            "DependsOn": [
+                "SQSQueueDLQ"
+            ]
+        },
+		"LambdaTrigger": {
+			"Type" : "AWS::Lambda::EventSourceMapping",
+			"Properties" : {
+				"Enabled": true,
+				"EventSourceArn": { "Fn::GetAtt": [ "SQSQueue", "Arn" ] },
+				"FunctionName": { "Fn::GetAtt": [ "LambdaNotifier", "Arn" ] }
+			},
+			 "DependsOn": [
+                "SQSQueue",
+				"LambdaNotifier"
+            ]
+		},
+		"SnsSubscription": {
+			"Type": "AWS::SNS::Subscription",
+			"Properties": {
+				"Protocol": "sqs",
+				"Endpoint": {"Fn::GetAtt": [ "SQSQueue", "Arn" ] },
+				"TopicArn": {"Ref": "SNSTopic" }
+			}
+		}
+	}
+}	
