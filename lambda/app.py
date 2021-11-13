@@ -1,7 +1,6 @@
 import json
 import boto3
 import os
-from boto3.dynamodb.conditions import Key
 import logging
 from botocore.exceptions import ClientError
 from email.mime.multipart import MIMEMultipart
@@ -36,10 +35,10 @@ def send_email_notification(content):
     
     response = ""
     try:
-        email_subject = content["subject"]
-        receipient_email = content["recipient"]
-        sender_email = content["sender"]
-        
+        email_subject = "hello"
+        receipient_email = ["sristiraj.a@gmail.com"]
+        sender_email = "sristiraj.b@gmail.com"
+        receipient_emails = ", ".join(receipient_email)
         logger.info("************************Send email notification method - Begin****************************")
 
         BODY_HTML = """\
@@ -54,14 +53,14 @@ def send_email_notification(content):
         <p>This is auto generated email. Please do not reply back.</p>
         <table border="1">
         """
-        BODY_HTML += "<tr><td>"+content["body"]+"</td></tr>"
+        BODY_HTML += "<tr><td>"+json.dumps(content)+"</td></tr>"
         BODY_HTML += "</table></body></html>"
 
         print(f"***********************Body HTML is {BODY_HTML}**************************")
         
         print(f"****************email subject is {email_subject}")
         print(f"****************sender_email is {sender_email}")
-        print(f"****************receipient_email is {receipient_email}")
+        print(f"****************receipient_email is {receipient_emails}")
        
         # Create a multipart/mixed parent container.
         msg = MIMEMultipart('mixed')
@@ -74,14 +73,14 @@ def send_email_notification(content):
 
         # Create a multipart/alternative child container.
         msg_body = MIMEMultipart('alternative')
-        
         # The character encoding for the email.
         CHARSET = "utf-8"
+        BODY_HTML = BODY_HTML.replace("{","[")
+        BODY_HTML = BODY_HTML.replace("}","]")
         BODY_HTML = BODY_HTML.format(tablefmt="html")
         # Encode the HTML content and set the character encoding. This step is
         # necessary if you're sending a message with characters outside the ASCII range.
         htmlpart = MIMEText(BODY_HTML.encode(CHARSET), 'html', CHARSET)        
-        
         # Add the text and HTML parts to the child container.
         msg_body.attach(htmlpart)
         
@@ -96,7 +95,7 @@ def send_email_notification(content):
             response = ses_client.send_raw_email(
                 Source=sender_email,
                 Destinations=receipient_email,
-                RawMessage={'Data':msg.as_string(),}
+                RawMessage={'Data':msg.as_string()}
                 )
             
         # Display an error if something goes wrong.	
@@ -118,7 +117,7 @@ def lambda_handler(event, context):
     item_dict = {}
     print(f"********Event is {event}************")
     
-    response = send_email_notification(event["Records"]["body"])
+    response = send_email_notification(event)
             
     return {"result":response}
       
