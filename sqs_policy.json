@@ -1,0 +1,20 @@
+{
+  "Version": "2012-10-17",
+  "Id": "arn:aws:sqs:us-east-1:541627396844:undefined/SQSDefaultPolicy",
+  "Statement": [
+    {
+      "Sid": "topic-subscription-arn:aws:sns:us-east-1:<<account>>:Logging-Notifier-dev",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "*"
+      },
+      "Action": "SQS:*",
+      "Resource": "arn:aws:sqs:us-east-1:<<account>>:Logging-Queue-dev",
+      "Condition": {
+        "ArnLike": {
+          "aws:SourceArn": "arn:aws:sns:us-east-1:<<account>>:Logging-Notifier-dev"
+        }
+      }
+    }
+  ]
+}
