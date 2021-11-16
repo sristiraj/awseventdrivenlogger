@@ -1,0 +1,15 @@
+{
+	"SenderEmail":"sristiraj.b@gmail.com",
+	"ReceiverEmail":["sristiraj.a@gmail.com"],
+	"LogGroup":"/aws/watchtowerlogger",
+	"MetricFilterName":"GlueCustomLogger",
+	"MetricName":"GlueCustomLogger",
+	"MetricMatchPattern":"GlueCustomLogger",
+	"MetricNameSpace":"/aws/glue-job",
+	"MetricValue":1,
+	"MetricAlarmName":"GlueLoggerAlarm",
+	"MetricAlarmPeriod":"60",
+	"MetricThreashold":1,
+	"AlarmEvaluationPeriods":"1",
+	"AlarmDatapointsToAlarm":"1"
+}
