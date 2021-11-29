@@ -17,7 +17,7 @@ s3_bucket_index = notify_config_path.replace("s3://","").find("/")
 s3_bucket = notify_config_path[5:s3_bucket_index+5]
 s3_key = notify_config_path[s3_bucket_index+6:]
 ses_client = boto3.client('ses',region_name=aws_region)
-s3 = boto3.resource('s3')
+s3 = boto3.client('s3')
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -64,15 +64,17 @@ def send_email_notification(content):
         print(log_payload)
         lgroup, lstream, message = details(log_payload)
 
-        bucket = s3.Bucket(s3_bucket)
-        objs = list(bucket.objects.filter(Prefix=s3_key))
-        for obj in objs:
-            bucket = obj.bucket_name
-            key = obj.key
+        # bucket = s3.Bucket(s3_bucket)
+        # objs = list(bucket.objects.filter(Prefix=s3_key))
+        objs = s3.list_objects(Bucket=s3_bucket, Prefix=s3_key)
+        print(objs)
+        for obj in objs["Contents"]:
+            bucket = s3_bucket
+            key = obj["Key"]
             if "." in key:
-                content_object = s3.Object(bucket, key)
+                content_object = s3.get_object(Bucket=s3_bucket, Key=key)
                 try:
-                    file_content = content_object.get()['Body'].read().decode('utf-8')
+                    file_content = content_object['Body'].read().decode('utf-8')
                     json_content = json.loads(file_content)
                 except Exception as e:
                     json_content = {"service_arn":"unknown-json"}
