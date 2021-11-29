@@ -1,0 +1,6 @@
+{
+	"SenderEmail":"sristiraj.b@gmail.com",
+	"ReceiverEmail":["sristiraj.a@gmail.com"],
+	"LogGroup":"/aws/watchtowerlogger",
+	"ServiceArn":"testjob1"
+}
